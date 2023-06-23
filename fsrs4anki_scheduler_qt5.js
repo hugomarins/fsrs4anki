@@ -8,7 +8,7 @@ const deckParams = [
   {
     // Default parameters of FSRS4Anki for global
     "deckName": "global config for FSRS4Anki",
-    "w": [1, 1, 5, -0.5, -0.5, 0.2, 1.4, -0.12, 0.8, 2, -0.2, 0.2, 1],
+    "w": [2, 2.5, 4.1, -1.5, -1.5, 0.2, 0.25, -0.41, 9.3, 2, -0.2, 0.45, 1],
     // The above parameters can be optimized via FSRS4Anki optimizer.
     // For details about the parameters, please see: https://github.com/open-spaced-repetition/fsrs4anki/wiki/Free-Spaced-Repetition-Scheduler
     // User's custom parameters for global
@@ -44,7 +44,7 @@ const deckParams = [
 // To turn off FSRS in specific decks, fill them into the skip_decks list below.
 // And add <div id=deck deck_name="{{Deck}}"></div> to your card's front template's first line.
 // Please don't remove it even if you don't need it.
-const skip_decks = ["ALL::Learning::ML::NNDL", "ALL::Learning::English"];
+const skip_decks = ["Questões", "CIS flags", "Morse", "Beaufort", "Catechism", "~~Bíblia", "~~Músicas"];
 
 // "Fuzz" is a small random delay applied to new intervals to prevent cards from
 // sticking together and always coming up for review on the same day
@@ -52,7 +52,7 @@ const enable_fuzz = true;
 
 // FSRS supports displaying memory states of cards.
 // Enable it for debugging if you encounter something wrong.
-const display_memory_state = false;
+const display_memory_state = true;
 
 // Configuration End
 
@@ -65,7 +65,7 @@ if (display_memory_state) {
   var fsrs_status = document.createElement('span');
   fsrs_status.innerHTML = "<br>FSRS enabled";
   fsrs_status.id = "FSRS_status";
-  fsrs_status.style.cssText = "font-size:12px;opacity:0.5;font-family:monospace;text-align:left;line-height:1em;";
+  fsrs_status.style.cssText = "font-size:12px;opacity:0.7;font-family:monospace;text-align:left;line-height:1em; background-color: white;";
   document.body.appendChild(fsrs_status);
   document.getElementById("qa").style.cssText += "min-height:50vh;";
 }
@@ -76,7 +76,7 @@ if (deck_name = get_deckname()) {
     fsrs_status.innerHTML += "<br>Deck name: " + deck_name;
   }
   for (const i of skip_decks) {
-    if (deck_name.startsWith(i)) {
+    if (deck_name.includes(i)) {
       fsrs_status.innerHTML = fsrs_status.innerHTML.replace("FSRS enabled", "FSRS disabled");
       return;
     }
@@ -86,7 +86,9 @@ if (deck_name = get_deckname()) {
     return -a.deckName.localeCompare(b.deckName);
   });
   for (let i = 0; i < deckParams.length; i++) {
+    console.log("checking if " + deck_name + " starts with " + deckParams[i]["deckName"])
     if (deck_name.startsWith(deckParams[i]["deckName"])) {
+      console.log("deck name: " + deck_name + ", params: " + deckParams[i])
       params = deckParams[i];
       break;
     }
@@ -100,6 +102,7 @@ if (Object.keys(params).length === 0) {
   params = deckParams.find(deck => deck.deckName === "global config for FSRS4Anki");
 }
 const w = params["w"];
+console.log("Using deck settings: " + params["deckName"])
 const requestRetention = params["requestRetention"];
 const maximumInterval = params["maximumInterval"];
 const easyBonus = params["easyBonus"];
@@ -153,7 +156,9 @@ if (is_new()) {
   const last_s = customData.again.s;
   const retrievability = Math.exp(Math.log(0.9) * interval / last_s);
   if (display_memory_state) {
-    fsrs_status.innerHTML += "<br>D: " + last_d + "<br>S: " + last_s + "<br>R: " + (retrievability * 100).toFixed(2) + "%";
+    const color = (retrievability * 100 > 80) ? "green" : "red";
+    const prompt = (retrievability * 100 > 80) ? "" : "<h2>Recommended to flag this card. Retention low.</h2>";
+    fsrs_status.innerHTML += "<br>D: " + last_d + "<br>S: " + last_s + "<br>R: <span style='color: " + color + "'>" + (retrievability * 100).toFixed(2) + "%. " + prompt + "</span>";
   }
   customData.again.d = next_difficulty(last_d, "again");
   customData.again.s = next_forget_stability(customData.again.d, last_s, retrievability);
@@ -207,10 +212,10 @@ function mean_reversion(init, current) {
   return w[5] * init + (1 - w[5]) * current;
 }
 function next_recall_stability(d, s, r) {
-  return +(s * (1 + Math.exp(w[6]) * (11 - d) * Math.pow(s, w[7]) * (Math.exp((1 - r) * w[8]) - 1))).toFixed(2);
+  return +(s * (1 + Math.exp(w[6]) * (11 - d) * Math.pow(s, w[7]) * (Math.exp(1 - Math.pow(r, w[8])) - 1))).toFixed(2);
 }
 function next_forget_stability(d, s, r) {
-  return +(w[9] * Math.pow(d, w[10]) * Math.pow(s, w[11]) * Math.exp((1 - r) * w[12])).toFixed(2);
+  return +(w[9] * Math.pow(d, w[10]) * Math.pow(s, w[11]) * Math.exp(1 - Math.pow(r, w[12]))).toFixed(2);
 }
 function init_states() {
   customData.again.d = init_difficulty("again");
