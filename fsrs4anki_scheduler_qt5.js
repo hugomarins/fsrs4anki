@@ -22,8 +22,8 @@ const deckParams = [
   {
     // Example 1: User's custom parameters for this deck and its sub-decks.
     // Need to add <div id=deck deck_name="{{Deck}}"></div> to your card's front template's first line.
-    "deckName": "ALL::Learning::English::Reading",
-    "w": [1.1475, 1.401, 5.1483, -1.4221, -1.2282, 0.035, 1.4668, -0.1286, 0.7539, 1.9671, -0.2307, 0.32, 0.9451],
+    "deckName": "~Suporte::~English::Vocabulary",
+    "w": [1, 1, 5, -1, -1, 0.2, -0.5, -0.12, 5.7, 2, -0.2, 0.45, 1],
     "requestRetention": 0.9,
     "maximumInterval": 36500,
     "easyBonus": 1.3,
