@@ -157,8 +157,9 @@ if (is_new()) {
   const retrievability = Math.exp(Math.log(0.9) * interval / last_s);
   if (display_memory_state) {
     const color = (retrievability * 100 > 80) ? "green" : "red";
-    const prompt = (retrievability * 100 > 80) ? "" : "<h2>Recommended to flag this card. Retention low.</h2>";
-    fsrs_status.innerHTML += "<br>D: " + last_d + "<br>S: " + last_s + "<br>R: <span style='color: " + color + "'>" + (retrievability * 100).toFixed(2) + "%. " + prompt + "</span>";
+    const colord = (last_d < 7) ? "blue" : "red";
+    const prompt = (last_d < 7.5) ? "" : "High Difficulty!";
+    fsrs_status.innerHTML += "<br>D: <span style='color: " + colord + "'>" + last_d + "</span>" + "<br>S: " + last_s + "<br>R: <span style='color: " + color + "'>" + (retrievability * 100).toFixed(2) + "%. " + "</span>"  + "<br> <span style='color: red; font-weight: bold; font-size: 16px'>" + prompt + "</span>";
   }
   customData.again.d = next_difficulty(last_d, "again");
   customData.again.s = next_forget_stability(customData.again.d, last_s, retrievability);
