@@ -238,7 +238,7 @@ function convert_states() {
   const scheduledDays = states.current.normal ? states.current.normal.review.scheduledDays : states.current.filtered.rescheduling.originalState.review.scheduledDays;
   const easeFactor = states.current.normal ? states.current.normal.review.easeFactor : states.current.filtered.rescheduling.originalState.review.easeFactor;
   const old_s = +Math.max(scheduledDays, 0.1).toFixed(2);
-  const old_d = constrain_difficulty(11 - (easeFactor - 1) / (Math.exp(w[6]) * Math.pow(old_s, w[7]) * (Math.exp(0.1 * w[8]) - 1)));
+  const old_d = constrain_difficulty(5 * (2.5 /easeFactor) );
   customData.again.d = old_d;
   customData.again.s = old_s;
   customData.hard.d = old_d;
