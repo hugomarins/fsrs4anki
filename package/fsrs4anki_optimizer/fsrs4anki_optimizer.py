@@ -108,7 +108,7 @@ def lineToTensor(line: str) -> Tensor:
 
 class RevlogDataset(Dataset):
     def __init__(self, dataframe: pd.DataFrame):
-        if len(dataframe) == 0:
+        if dataframe.empty:
             raise ValueError('Training data is inadequate.')
         padded = pad_sequence(dataframe['tensor'].to_list(), batch_first=True, padding_value=0)
         self.x_train = padded.int()
@@ -342,21 +342,42 @@ class Optimizer:
         else:
             raise Exception("Collection not exist!")
         cur = con.cursor()
-        res = cur.execute("SELECT * FROM revlog")
+        res = cur.execute("""
+        SELECT *
+        FROM revlog
+        WHERE cid IN (
+            SELECT id
+            FROM cards
+        )
+        """
+        )
         revlog = res.fetchall()
         if len(revlog) == 0:
             raise Exception("No review log found!")
         df = pd.DataFrame(revlog)
         df.columns = ['id', 'cid', 'usn', 'r', 'ivl', 'last_lvl', 'factor', 'time', 'type']
         df = df[(df['cid'] <= time.time() * 1000) &
-                (df['id'] <= time.time() * 1000) &
-                (df['r'] > 0)].copy()
+                (df['id'] <= time.time() * 1000)].copy()
+        
+        df_set_due_date = df[(df['type'] == 4) & (df['ivl'] > 0)]
+        df.drop(df_set_due_date.index, inplace=True)
+
         df['create_date'] = pd.to_datetime(df['cid'] // 1000, unit='s')
         df['create_date'] = df['create_date'].dt.tz_localize('UTC').dt.tz_convert(timezone)
         df['review_date'] = pd.to_datetime(df['id'] // 1000, unit='s')
         df['review_date'] = df['review_date'].dt.tz_localize('UTC').dt.tz_convert(timezone)
         df.drop(df[df['review_date'].dt.year < 2006].index, inplace=True)
         df.sort_values(by=['cid', 'id'], inplace=True, ignore_index=True)
+
+        df['is_learn_start'] = (df['type'] == 0) & (df['type'].shift() != 0)
+        df['sequence_group'] = df['is_learn_start'].cumsum()
+        last_learn_start = df[df['is_learn_start']].groupby('cid')['sequence_group'].last()
+        df['last_learn_start'] = df['cid'].map(last_learn_start).fillna(0).astype(int)
+        df['mask'] = df['last_learn_start'] <= df['sequence_group']
+        df = df[df['mask'] == True].copy()
+        df.drop(columns=['is_learn_start', 'sequence_group', 'last_learn_start', 'mask'], inplace=True)
+        df = df[(df['type'] != 4)].copy()
+
         self.type_sequence = np.array(df['type'])
         self.time_sequence = np.array(df['time'])
         df.to_csv("revlog.csv", index=False)
@@ -462,6 +483,8 @@ class Optimizer:
         """Step 4"""
         self.dataset = pd.read_csv("./revlog_history.tsv", sep='\t', index_col=None, dtype={'r_history': str ,'t_history': str} )
         self.dataset = self.dataset[(self.dataset['i'] > 1) & (self.dataset['delta_t'] > 0) & (self.dataset['t_history'].str.count(',0') == 0)]
+        if self.dataset.empty:
+            raise ValueError('Training data is inadequate.')
         self.dataset['tensor'] = self.dataset.progress_apply(lambda x: lineToTensor(list(zip([x['t_history']], [x['r_history']]))[0]), axis=1)
         self.dataset['group'] = self.dataset['r_history'] + self.dataset['t_history']
         print("Tensorized!")
