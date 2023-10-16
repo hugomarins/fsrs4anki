@@ -8,7 +8,7 @@ const deckParams = [
   {
     // Default parameters of FSRS4Anki for global
     "deckName": "global config for FSRS4Anki",
-    "w": [0.4, 0.6, 2.4, 5.8, 4.93, 0.94, 0.86, 0.01, 1.49, 0.14, 0.94, 2.18, 0.05, 0.34, 1.26, 0.29, 2.61],
+    "w": [1, 4, 7, 13, 4.1, 1.5, 1.5, 0.2, 0.25, 0.41, 9.3, 2, 0.2, 0.45, 1, 0.29, 1.6],
     // The above parameters can be optimized via FSRS4Anki optimizer.
     // For details about the parameters, please see: https://github.com/open-spaced-repetition/fsrs4anki/wiki/The-Algorithm
     // User's custom parameters for global
@@ -19,8 +19,8 @@ const deckParams = [
   },
   {
     // Example 1: User's custom parameters for this deck and its sub-decks.
-    "deckName": "MainDeck1",
-    "w": [0.6, 0.9, 2.9, 6.8, 4.72, 1.02, 1, 0.04, 1.49, 0.17, 1.02, 2.15, 0.07, 0.35, 1.17, 0.32, 2.53],
+    "deckName": "~Suporte::~English::Vocabulary",
+    "w": [1, 2, 3, 4, 5, 1, 1, 0.2, -0.5, 0.12, 5.7, 2, 0.2, 0.45, 1, 0.29, 1.6],
     "requestRetention": 0.9,
     "maximumInterval": 36500,
   },
@@ -36,7 +36,7 @@ const deckParams = [
 
 // To turn off FSRS in specific decks, fill them into the skip_decks list below.
 // Please don't remove it even if you don't need it.
-const skip_decks = ["MainDeck3", "MainDeck4::SubDeck"];
+const skip_decks = ["Questões", "CIS flags", "Morse", "Beaufort", "Catechism", "~~Bíblia", "~~Músicas"];
 
 // "Fuzz" is a small random delay applied to new intervals to prevent cards from
 // sticking together and always coming up for review on the same day
@@ -44,7 +44,7 @@ const enable_fuzz = true;
 
 // FSRS supports displaying memory states of cards.
 // Enable it for debugging if you encounter something wrong.
-const display_memory_state = false;
+const display_memory_state = true;
 
 // Configuration End
 
@@ -57,7 +57,7 @@ if (display_memory_state) {
   var fsrs_status = document.createElement('span');
   fsrs_status.innerHTML = "<br>FSRS enabled";
   fsrs_status.id = "FSRS_status";
-  fsrs_status.style.cssText = "font-size:12px;opacity:0.5;font-family:monospace;text-align:left;line-height:1em;";
+  fsrs_status.style.cssText = "font-size:12px;opacity:0.7;font-family:monospace;text-align:left;line-height:1em; background-color: white; color: black;";
   document.body.appendChild(fsrs_status);
   document.getElementById("qa").style.cssText += "min-height:50vh;";
 }
@@ -199,7 +199,7 @@ function next_recall_stability(d, s, r, rating) {
   return +(s * (1 + Math.exp(w[8]) *
     (11 - d) *
     Math.pow(s, -w[9]) *
-    (Math.exp((1 - r) * w[10]) - 1) *
+    (Math.exp(1 - Math.pow(r, w[10])) - 1) *
     hardPenalty *
     easyBonus)).toFixed(2);
 }
@@ -229,7 +229,7 @@ function convert_states() {
   const scheduledDays = states.current.normal ? states.current.normal.review.scheduledDays : states.current.filtered.rescheduling.originalState.review.scheduledDays;
   const easeFactor = states.current.normal ? states.current.normal.review.easeFactor : states.current.filtered.rescheduling.originalState.review.easeFactor;
   const old_s = +Math.max(scheduledDays, 0.1).toFixed(2);
-  const old_d = constrain_difficulty(11 - (easeFactor - 1) / (Math.exp(w[8]) * Math.pow(old_s, -w[9]) * (Math.exp(0.1 * w[10]) - 1)));
+  const old_d = constrain_difficulty(5 * (2.5 /easeFactor) );
   customData.again.d = old_d;
   customData.again.s = old_s;
   customData.hard.d = old_d;
