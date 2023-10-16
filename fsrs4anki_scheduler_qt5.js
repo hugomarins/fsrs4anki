@@ -60,7 +60,7 @@ if (display_memory_state) {
   var fsrs_status = document.createElement('span');
   fsrs_status.innerHTML = "<br>FSRS enabled";
   fsrs_status.id = "FSRS_status";
-  fsrs_status.style.cssText = "font-size:12px;opacity:0.7;font-family:monospace;text-align:left;line-height:1em; background-color: white;";
+  fsrs_status.style.cssText = "font-size:12px;opacity:0.7;font-family:monospace;text-align:left;line-height:1em; background-color: white; color: black;";
   document.body.appendChild(fsrs_status);
   document.getElementById("qa").style.cssText += "min-height:50vh;";
 }
