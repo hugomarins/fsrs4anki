@@ -68,7 +68,7 @@ if (deck_name = get_deckname()) {
     fsrs_status.innerHTML += "<br>Deck name: " + deck_name;
   }
   for (const i of skip_decks) {
-    if (deck_name.startsWith(i)) {
+    if (deck_name.includes(i)) {
       fsrs_status.innerHTML = fsrs_status.innerHTML.replace("FSRS enabled", "FSRS disabled");
       return;
     }
