@@ -1,4 +1,4 @@
-// FSRS4Anki v4.5.6 Scheduler Qt5
+// FSRS4Anki v4.11.1 Scheduler Qt5
 set_version();
 // The latest version will be released on https://github.com/open-spaced-repetition/fsrs4anki/releases/latest
 
@@ -100,8 +100,8 @@ const w = params["w"];
 console.log("Using deck settings: " + params["deckName"])
 const requestRetention = params["requestRetention"];
 const maximumInterval = params["maximumInterval"];
-// auto-calculate intervalModifier
-const intervalModifier = 9 * (1 / requestRetention - 1);
+const DECAY = -0.5;
+const FACTOR = 0.9 ** (1 / DECAY) - 1;
 // global fuzz factor for all ratings.
 const fuzz_factor = set_fuzz_factor();
 const ratings = {
@@ -147,7 +147,7 @@ if (is_new()) {
   const interval = (_states$current$norma = states.current.normal) !== null && _states$current$norma !== void 0 && _states$current$norma.review.elapsedDays ? states.current.normal.review.elapsedDays : states.current.filtered.rescheduling.originalState.review.elapsedDays;
   const last_d = customData.again.d;
   const last_s = customData.again.s;
-  const retrievability = Math.pow(1 + interval / (9 * last_s), -1);
+  const retrievability = forgetting_curve(interval, last_s);
   if (display_memory_state) {
     const color = (retrievability * 100 > 80) ? "green" : "red";
     const colord = (last_d < 7) ? "blue" : "red";
@@ -155,13 +155,13 @@ if (is_new()) {
     fsrs_status.innerHTML += "<br>D: <span style='color: " + colord + "'>" + last_d + "</span>" + "<br>S: " + last_s + "<br>R: <span style='color: " + color + "'>" + (retrievability * 100).toFixed(2) + "%. " + "</span>"  + "<br> <span style='color: red; font-weight: bold; font-size: 16px'>" + prompt + "</span>";
   }
   customData.again.d = next_difficulty(last_d, "again");
-  customData.again.s = next_forget_stability(customData.again.d, last_s, retrievability);
+  customData.again.s = next_forget_stability(last_d, last_s, retrievability);
   customData.hard.d = next_difficulty(last_d, "hard");
-  customData.hard.s = next_recall_stability(customData.hard.d, last_s, retrievability, "hard");
+  customData.hard.s = next_recall_stability(last_d, last_s, retrievability, "hard");
   customData.good.d = next_difficulty(last_d, "good");
-  customData.good.s = next_recall_stability(customData.good.d, last_s, retrievability, "good");
+  customData.good.s = next_recall_stability(last_d, last_s, retrievability, "good");
   customData.easy.d = next_difficulty(last_d, "easy");
-  customData.easy.s = next_recall_stability(customData.easy.d, last_s, retrievability, "easy");
+  customData.easy.s = next_recall_stability(last_d, last_s, retrievability, "easy");
   let hard_interval = next_interval(customData.hard.s);
   let good_interval = next_interval(customData.good.s);
   let easy_interval = next_interval(customData.easy.s);
@@ -195,8 +195,11 @@ function apply_fuzz(ivl) {
   }
   return Math.floor(fuzz_factor * (max_ivl - min_ivl + 1) + min_ivl);
 }
+function forgetting_curve(elpased_days, stability) {
+  return Math.pow(1 + FACTOR * elpased_days / stability, DECAY);
+}
 function next_interval(stability) {
-  const new_interval = apply_fuzz(stability * intervalModifier);
+  const new_interval = apply_fuzz(stability / FACTOR * (Math.pow(requestRetention, 1 / DECAY) - 1));
   return Math.min(Math.max(Math.round(new_interval), 1), maximumInterval);
 }
 function next_difficulty(d, rating) {
@@ -310,7 +313,7 @@ function is_empty() {
   return !customData.again.d | !customData.again.s | !customData.hard.d | !customData.hard.s | !customData.good.d | !customData.good.s | !customData.easy.d | !customData.easy.s;
 }
 function set_version() {
-  const version = "v4.5.6";
+  const version = "v4.11.1";
   customData.again.v = version;
   customData.hard.v = version;
   customData.good.v = version;
